@@ -17,6 +17,7 @@ limitations under the License.
 package testsuite
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -154,9 +155,9 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 	ctx.Step(`"(JSON|YAML)" config file "(.*)" (contains|does not contain) key "(.*)"$`,
 		ConfigFileContainsKey)
 
-	ctx.BeforeScenario(func(sc *godog.Scenario) {
+	ctx.Before(func(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
 		_ = util.LogMessage("info", fmt.Sprintf("----- Scenario: %s -----", sc.Name))
-		_ = util.LogMessage("info", fmt.Sprintf("----- Scenario Outline: %s -----", sc.String()))
+		_ = util.LogMessage("info", fmt.Sprintf("----- Scenario Outline: %s -----", sc))
 		_ = StartHostShellInstance(testWithShell)
 		util.ClearScenarioVariables()
 		err := CleanTestRunDir()
@@ -164,14 +165,17 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 			fmt.Println(err)
 			os.Exit(1)
 		}
+		return ctx, nil
 	})
 
-	ctx.BeforeStep(func(st *godog.Step) {
+	ctx.StepContext().Before(func(ctx context.Context, st *godog.Step) (context.Context, error) {
 		st.Text = util.ProcessScenarioVariables(st.Text)
+		return ctx, nil
 	})
 
-	ctx.AfterScenario(func(sc *godog.Scenario, err error) {
+	ctx.After(func(ctx context.Context, sc *godog.Scenario, err error) (context.Context, error) {
 		_ = util.LogMessage("info", "----- Cleaning after scenario -----")
 		_ = CloseHostShellInstance()
+		return ctx, nil
 	})
 }

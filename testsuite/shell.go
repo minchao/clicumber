@@ -27,8 +27,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cucumber/messages-go/v10"
 	"github.com/code-ready/clicumber/util"
+	"github.com/cucumber/messages-go/v16"
 )
 
 const (
@@ -287,7 +287,7 @@ func CommandReturnShouldContain(commandField string, expected string) error {
 	return CompareExpectedWithActualContains(expected, shell.GetLastCmdOutput(commandField))
 }
 
-func CommandReturnShouldContainContent(commandField string, expected *messages.PickleStepArgument_PickleDocString) error {
+func CommandReturnShouldContainContent(commandField string, expected *messages.PickleDocString) error {
 	return CompareExpectedWithActualContains(expected.Content, shell.GetLastCmdOutput(commandField))
 }
 
@@ -295,7 +295,7 @@ func CommandReturnShouldNotContain(commandField string, notexpected string) erro
 	return CompareExpectedWithActualNotContains(notexpected, shell.GetLastCmdOutput(commandField))
 }
 
-func CommandReturnShouldNotContainContent(commandField string, notexpected *messages.PickleStepArgument_PickleDocString) error {
+func CommandReturnShouldNotContainContent(commandField string, notexpected *messages.PickleDocString) error {
 	return CompareExpectedWithActualNotContains(notexpected.Content, shell.GetLastCmdOutput(commandField))
 }
 
@@ -311,7 +311,7 @@ func CommandReturnShouldEqual(commandField string, expected string) error {
 	return CompareExpectedWithActualEquals(expected, shell.GetLastCmdOutput(commandField))
 }
 
-func CommandReturnShouldEqualContent(commandField string, expected *messages.PickleStepArgument_PickleDocString) error {
+func CommandReturnShouldEqualContent(commandField string, expected *messages.PickleDocString) error {
 	return CompareExpectedWithActualEquals(expected.Content, shell.GetLastCmdOutput(commandField))
 }
 
@@ -319,7 +319,7 @@ func CommandReturnShouldNotEqual(commandField string, expected string) error {
 	return CompareExpectedWithActualNotEquals(expected, shell.GetLastCmdOutput(commandField))
 }
 
-func CommandReturnShouldNotEqualContent(commandField string, expected *messages.PickleStepArgument_PickleDocString) error {
+func CommandReturnShouldNotEqualContent(commandField string, expected *messages.PickleDocString) error {
 	return CompareExpectedWithActualNotEquals(expected.Content, shell.GetLastCmdOutput(commandField))
 }
 
@@ -327,7 +327,7 @@ func CommandReturnShouldMatch(commandField string, expected string) error {
 	return CompareExpectedWithActualMatchesRegex(expected, shell.GetLastCmdOutput(commandField))
 }
 
-func CommandReturnShouldMatchContent(commandField string, expected *messages.PickleStepArgument_PickleDocString) error {
+func CommandReturnShouldMatchContent(commandField string, expected *messages.PickleDocString) error {
 	return CompareExpectedWithActualMatchesRegex(expected.Content, shell.GetLastCmdOutput(commandField))
 }
 
@@ -335,7 +335,7 @@ func CommandReturnShouldNotMatch(commandField string, expected string) error {
 	return CompareExpectedWithActualNotMatchesRegex(expected, shell.GetLastCmdOutput(commandField))
 }
 
-func CommandReturnShouldNotMatchContent(commandField string, expected *messages.PickleStepArgument_PickleDocString) error {
+func CommandReturnShouldNotMatchContent(commandField string, expected *messages.PickleDocString) error {
 	return CompareExpectedWithActualNotMatchesRegex(expected.Content, shell.GetLastCmdOutput(commandField))
 }
 
