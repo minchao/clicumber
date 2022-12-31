@@ -21,33 +21,28 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cucumber/godog"
 	"github.com/code-ready/clicumber/testsuite"
+	"github.com/cucumber/godog"
 )
 
 func TestMain(m *testing.M) {
 	parseFlags()
 
-	status := godog.RunWithOptions("minishift", func(s *godog.Suite) {
-		getFeatureContext(s)
-	}, godog.Options{
-		Format:              testsuite.GodogFormat,
-		Paths:               strings.Split(testsuite.GodogPaths, ","),
-		Tags:                testsuite.GodogTags,
-		ShowStepDefinitions: testsuite.GodogShowStepDefinitions,
-		StopOnFailure:       testsuite.GodogStopOnFailure,
-		NoColors:            testsuite.GodogNoColors,
-	})
+	status := godog.TestSuite{
+		Name:                 "clicumber",
+		TestSuiteInitializer: testsuite.InitializeTestSuite,
+		ScenarioInitializer:  testsuite.InitializeScenario,
+		Options: &godog.Options{
+			Format:              testsuite.GodogFormat,
+			Paths:               strings.Split(testsuite.GodogPaths, ","),
+			Tags:                testsuite.GodogTags,
+			ShowStepDefinitions: testsuite.GodogShowStepDefinitions,
+			StopOnFailure:       testsuite.GodogStopOnFailure,
+			NoColors:            testsuite.GodogNoColors,
+		},
+	}.Run()
 
 	os.Exit(status)
-}
-
-func getFeatureContext(s *godog.Suite) {
-	// load default step definitions of clicumber testsuite
-	testsuite.FeatureContext(s)
-
-	// here you can load additional step definitions, for example:
-	// mypackage.FeatureContext(s)
 }
 
 func parseFlags() {

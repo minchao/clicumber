@@ -20,9 +20,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/cucumber/godog"
-	"github.com/cucumber/messages-go/v10"
 	"github.com/code-ready/clicumber/util"
+	"github.com/cucumber/godog"
 )
 
 var (
@@ -40,115 +39,125 @@ var (
 	GodogPaths               string
 )
 
-// FeatureContext defines godog.Suite steps for the test suite.
-func FeatureContext(s *godog.Suite) {
-	// Executing commands
-	s.Step(`^executing "(.*)"$`,
-		ExecuteCommand)
-	s.Step(`^executing "(.*)" (succeeds|fails)$`,
-		ExecuteCommandSucceedsOrFails)
-
-	// Command output verification
-	s.Step(`^(stdout|stderr|exitcode) (?:should contain|contains) "(.*)"$`,
-		CommandReturnShouldContain)
-	s.Step(`^(stdout|stderr|exitcode) (?:should contain|contains)$`,
-		CommandReturnShouldContainContent)
-	s.Step(`^(stdout|stderr|exitcode) (?:should|does) not contain "(.*)"$`,
-		CommandReturnShouldNotContain)
-	s.Step(`^(stdout|stderr|exitcode) (?:should|does not) contain$`,
-		CommandReturnShouldNotContainContent)
-
-	s.Step(`^(stdout|stderr|exitcode) (?:should equal|equals) "(.*)"$`,
-		CommandReturnShouldEqual)
-	s.Step(`^(stdout|stderr|exitcode) (?:should equal|equals)$`,
-		CommandReturnShouldEqualContent)
-	s.Step(`^(stdout|stderr|exitcode) (?:should|does) not equal "(.*)"$`,
-		CommandReturnShouldNotEqual)
-	s.Step(`^(stdout|stderr|exitcode) (?:should|does) not equal$`,
-		CommandReturnShouldNotEqualContent)
-
-	s.Step(`^(stdout|stderr|exitcode) (?:should match|matches) "(.*)"$`,
-		CommandReturnShouldMatch)
-	s.Step(`^(stdout|stderr|exitcode) (?:should match|matches)`,
-		CommandReturnShouldMatchContent)
-	s.Step(`^(stdout|stderr|exitcode) (?:should|does) not match "(.*)"$`,
-		CommandReturnShouldNotMatch)
-	s.Step(`^(stdout|stderr|exitcode) (?:should|does) not match`,
-		CommandReturnShouldNotMatchContent)
-
-	s.Step(`^(stdout|stderr|exitcode) (?:should be|is) empty$`,
-		CommandReturnShouldBeEmpty)
-	s.Step(`^(stdout|stderr|exitcode) (?:should not be|is not) empty$`,
-		CommandReturnShouldNotBeEmpty)
-
-	s.Step(`^(stdout|stderr|exitcode) (?:should be|is) valid "([^"]*)"$`,
-		ShouldBeInValidFormat)
-
-	// Command output and execution: extra steps
-	s.Step(`^with up to "(\d*)" retries with wait period of "(\d*(?:ms|s|m))" command "(.*)" output (should contain|contains|should not contain|does not contain) "(.*)"$`,
-		ExecuteCommandWithRetry)
-	s.Step(`^evaluating stdout of the previous command succeeds$`,
-		ExecuteStdoutLineByLine)
-
-	// Scenario variables
-	// allows to set a scenario variable to the output values of minishift and oc commands
-	// and then refer to it by $(NAME_OF_VARIABLE) directly in the text of feature file
-	s.Step(`^setting scenario variable "(.*)" to the stdout from executing "(.*)"$`,
-		SetScenarioVariableExecutingCommand)
-
-	// Filesystem operations
-	s.Step(`^creating directory "([^"]*)" succeeds$`,
-		CreateDirectory)
-	s.Step(`^creating file "([^"]*)" succeeds$`,
-		CreateFile)
-	s.Step(`^deleting directory "([^"]*)" succeeds$`,
-		DeleteDirectory)
-	s.Step(`^deleting file "([^"]*)" succeeds$`,
-		DeleteFile)
-	s.Step(`^directory "([^"]*)" should not exist$`,
-		DirectoryShouldNotExist)
-	s.Step(`^file "([^"]*)" should not exist$`,
-		FileShouldNotExist)
-	s.Step(`^file "([^"]*)" exists$`,
-		FileExist)
-	s.Step(`^file from "(.*)" is downloaded into location "(.*)"$`,
-		DownloadFileIntoLocation)
-	s.Step(`^writing text "([^"]*)" to file "([^"]*)" succeeds$`,
-		WriteToFile)
-
-	// File content checks
-	s.Step(`^content of file "([^"]*)" should contain "([^"]*)"$`,
-		FileContentShouldContain)
-	s.Step(`^content of file "([^"]*)" should not contain "([^"]*)"$`,
-		FileContentShouldNotContain)
-	s.Step(`^content of file "([^"]*)" should equal "([^"]*)"$`,
-		FileContentShouldEqual)
-	s.Step(`^content of file "([^"]*)" should not equal "([^"]*)"$`,
-		FileContentShouldNotEqual)
-	s.Step(`^content of file "([^"]*)" should match "([^"]*)"$`,
-		FileContentShouldMatchRegex)
-	s.Step(`^content of file "([^"]*)" should not match "([^"]*)"$`,
-		FileContentShouldNotMatchRegex)
-	s.Step(`^content of file "([^"]*)" (?:should be|is) valid "([^"]*)"$`,
-		FileContentIsInValidFormat)
-
-	// Config file content, JSON and YAML
-	s.Step(`"(JSON|YAML)" config file "(.*)" (contains|does not contain) key "(.*)" with value matching "(.*)"$`,
-		ConfigFileContainsKeyMatchingValue)
-	s.Step(`"(JSON|YAML)" config file "(.*)" (contains|does not contain) key "(.*)"$`,
-		ConfigFileContainsKey)
-
-	s.BeforeSuite(func() {
+func InitializeTestSuite(ctx *godog.TestSuiteContext) {
+	ctx.BeforeSuite(func() {
 		err := PrepareForE2eTest()
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
 	})
+	ctx.AfterSuite(func() {
+		_ = util.LogMessage("info", "----- Cleaning Up -----")
+		err := util.CloseLog()
+		if err != nil {
+			fmt.Println("Error closing the log:", err)
+		}
+	})
+}
 
-	s.BeforeFeature(func(this *messages.GherkinDocument) {
-		util.LogMessage("info", fmt.Sprintf("----- Feature: %s -----", this.String()))
-		StartHostShellInstance(testWithShell)
+// InitializeScenario defines godog.ScenarioContext steps for the test scenario.
+func InitializeScenario(ctx *godog.ScenarioContext) {
+	// Executing commands
+	ctx.Step(`^executing "(.*)"$`,
+		ExecuteCommand)
+	ctx.Step(`^executing "(.*)" (succeeds|fails)$`,
+		ExecuteCommandSucceedsOrFails)
+
+	// Command output verification
+	ctx.Step(`^(stdout|stderr|exitcode) (?:should contain|contains) "(.*)"$`,
+		CommandReturnShouldContain)
+	ctx.Step(`^(stdout|stderr|exitcode) (?:should contain|contains)$`,
+		CommandReturnShouldContainContent)
+	ctx.Step(`^(stdout|stderr|exitcode) (?:should|does) not contain "(.*)"$`,
+		CommandReturnShouldNotContain)
+	ctx.Step(`^(stdout|stderr|exitcode) (?:should|does not) contain$`,
+		CommandReturnShouldNotContainContent)
+
+	ctx.Step(`^(stdout|stderr|exitcode) (?:should equal|equals) "(.*)"$`,
+		CommandReturnShouldEqual)
+	ctx.Step(`^(stdout|stderr|exitcode) (?:should equal|equals)$`,
+		CommandReturnShouldEqualContent)
+	ctx.Step(`^(stdout|stderr|exitcode) (?:should|does) not equal "(.*)"$`,
+		CommandReturnShouldNotEqual)
+	ctx.Step(`^(stdout|stderr|exitcode) (?:should|does) not equal$`,
+		CommandReturnShouldNotEqualContent)
+
+	ctx.Step(`^(stdout|stderr|exitcode) (?:should match|matches) "(.*)"$`,
+		CommandReturnShouldMatch)
+	ctx.Step(`^(stdout|stderr|exitcode) (?:should match|matches)`,
+		CommandReturnShouldMatchContent)
+	ctx.Step(`^(stdout|stderr|exitcode) (?:should|does) not match "(.*)"$`,
+		CommandReturnShouldNotMatch)
+	ctx.Step(`^(stdout|stderr|exitcode) (?:should|does) not match`,
+		CommandReturnShouldNotMatchContent)
+
+	ctx.Step(`^(stdout|stderr|exitcode) (?:should be|is) empty$`,
+		CommandReturnShouldBeEmpty)
+	ctx.Step(`^(stdout|stderr|exitcode) (?:should not be|is not) empty$`,
+		CommandReturnShouldNotBeEmpty)
+
+	ctx.Step(`^(stdout|stderr|exitcode) (?:should be|is) valid "([^"]*)"$`,
+		ShouldBeInValidFormat)
+
+	// Command output and execution: extra steps
+	ctx.Step(`^with up to "(\d*)" retries with wait period of "(\d*(?:ms|s|m))" command "(.*)" output (should contain|contains|should not contain|does not contain) "(.*)"$`,
+		ExecuteCommandWithRetry)
+	ctx.Step(`^evaluating stdout of the previous command succeeds$`,
+		ExecuteStdoutLineByLine)
+
+	// Scenario variables
+	// allows to set a scenario variable to the output values of minishift and oc commands
+	// and then refer to it by $(NAME_OF_VARIABLE) directly in the text of feature file
+	ctx.Step(`^setting scenario variable "(.*)" to the stdout from executing "(.*)"$`,
+		SetScenarioVariableExecutingCommand)
+
+	// Filesystem operations
+	ctx.Step(`^creating directory "([^"]*)" succeeds$`,
+		CreateDirectory)
+	ctx.Step(`^creating file "([^"]*)" succeeds$`,
+		CreateFile)
+	ctx.Step(`^deleting directory "([^"]*)" succeeds$`,
+		DeleteDirectory)
+	ctx.Step(`^deleting file "([^"]*)" succeeds$`,
+		DeleteFile)
+	ctx.Step(`^directory "([^"]*)" should not exist$`,
+		DirectoryShouldNotExist)
+	ctx.Step(`^file "([^"]*)" should not exist$`,
+		FileShouldNotExist)
+	ctx.Step(`^file "([^"]*)" exists$`,
+		FileExist)
+	ctx.Step(`^file from "(.*)" is downloaded into location "(.*)"$`,
+		DownloadFileIntoLocation)
+	ctx.Step(`^writing text "([^"]*)" to file "([^"]*)" succeeds$`,
+		WriteToFile)
+
+	// File content checks
+	ctx.Step(`^content of file "([^"]*)" should contain "([^"]*)"$`,
+		FileContentShouldContain)
+	ctx.Step(`^content of file "([^"]*)" should not contain "([^"]*)"$`,
+		FileContentShouldNotContain)
+	ctx.Step(`^content of file "([^"]*)" should equal "([^"]*)"$`,
+		FileContentShouldEqual)
+	ctx.Step(`^content of file "([^"]*)" should not equal "([^"]*)"$`,
+		FileContentShouldNotEqual)
+	ctx.Step(`^content of file "([^"]*)" should match "([^"]*)"$`,
+		FileContentShouldMatchRegex)
+	ctx.Step(`^content of file "([^"]*)" should not match "([^"]*)"$`,
+		FileContentShouldNotMatchRegex)
+	ctx.Step(`^content of file "([^"]*)" (?:should be|is) valid "([^"]*)"$`,
+		FileContentIsInValidFormat)
+
+	// Config file content, JSON and YAML
+	ctx.Step(`"(JSON|YAML)" config file "(.*)" (contains|does not contain) key "(.*)" with value matching "(.*)"$`,
+		ConfigFileContainsKeyMatchingValue)
+	ctx.Step(`"(JSON|YAML)" config file "(.*)" (contains|does not contain) key "(.*)"$`,
+		ConfigFileContainsKey)
+
+	ctx.BeforeScenario(func(sc *godog.Scenario) {
+		_ = util.LogMessage("info", fmt.Sprintf("----- Scenario: %s -----", sc.Name))
+		_ = util.LogMessage("info", fmt.Sprintf("----- Scenario Outline: %s -----", sc.String()))
+		_ = StartHostShellInstance(testWithShell)
 		util.ClearScenarioVariables()
 		err := CleanTestRunDir()
 		if err != nil {
@@ -157,28 +166,12 @@ func FeatureContext(s *godog.Suite) {
 		}
 	})
 
-	s.BeforeScenario(func(this *messages.Pickle) {
-		util.LogMessage("info", fmt.Sprintf("----- Scenario: %s -----", this.Name))
-		util.LogMessage("info", fmt.Sprintf("----- Scenario Outline: %s -----", this.String()))
+	ctx.BeforeStep(func(st *godog.Step) {
+		st.Text = util.ProcessScenarioVariables(st.Text)
 	})
 
-	s.BeforeStep(func(this *messages.Pickle_PickleStep) {
-		this.Text = util.ProcessScenarioVariables(this.Text)
-	})
-
-	s.AfterScenario(func(*messages.Pickle, error) {
-	})
-
-	s.AfterFeature(func(*messages.GherkinDocument) {
-		util.LogMessage("info", "----- Cleaning after feature -----")
-		CloseHostShellInstance()
-	})
-
-	s.AfterSuite(func() {
-		util.LogMessage("info", "----- Cleaning Up -----")
-		err := util.CloseLog()
-		if err != nil {
-			fmt.Println("Error closing the log:", err)
-		}
+	ctx.AfterScenario(func(sc *godog.Scenario, err error) {
+		_ = util.LogMessage("info", "----- Cleaning after scenario -----")
+		_ = CloseHostShellInstance()
 	})
 }
