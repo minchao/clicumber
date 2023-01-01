@@ -20,7 +20,9 @@ Feature: Testsuite test
 
   @windows
   Scenario: Command which is not present
-    When executing "foobar" succeed
+    # note: exit code is only supported by native program
+    # see https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_automatic_variables?view=powershell-7.4#lastexitcode
+    When executing "foobar"
     Then stderr should contain
       """
       'foobar' is not recognized
@@ -72,8 +74,9 @@ Feature: Testsuite test
 
   @windows
   Scenario: Able to use defined variable
-    When executing "$Env:POD = $(echo 'hello')" succeeds
-    And executing "echo $Env:POD" succeeds
+    # note: exit code is only supported by native program
+    When executing "$Env:POD = $(echo 'hello')"
+    And executing "echo $Env:POD"
     Then stdout should contain
       """
       hello
